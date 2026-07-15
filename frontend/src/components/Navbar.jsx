@@ -1,38 +1,58 @@
 import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
-  const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+    const token = localStorage.getItem("token");
 
-  return (
-    <nav>
-      <h2>Cogniva</h2>
+    function logout() {
 
-      <div>
-        <Link to="/">Home</Link>
+        localStorage.removeItem("token");
+        navigate("/login");
 
-        {token ? (
-          <>
-            <Link to="/dashboard">Dashboard</Link>
-            <button onClick={handleLogout}>
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/register">Register</Link>
-            <Link to="/login">Login</Link>
-          </>
-        )}
-      </div>
-    </nav>
-  );
+    }
+
+    return (
+
+        <nav>
+
+            <div className="logo">
+                <Link to="/">Cogniva</Link>
+            </div>
+
+            <div className="nav-links">
+
+                <Link to="/">Home</Link>
+
+                {
+                    token ?
+
+                    <>
+                        <Link to="/dashboard">Dashboard</Link>
+
+                        <Link to="/documents">Documents</Link>
+
+                        <button onClick={logout}>
+                            Logout
+                        </button>
+                    </>
+
+                    :
+
+                    <>
+                        <Link to="/login">Login</Link>
+
+                        <Link to="/register">Register</Link>
+                    </>
+                }
+
+            </div>
+
+        </nav>
+
+    );
+
 }
 
 export default Navbar;
