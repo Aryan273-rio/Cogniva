@@ -6,7 +6,7 @@ from bson import ObjectId
 
 from database import documents_collection
 
-from utils.dependencies import get_current_user
+from dependencies import get_current_user
 
 from services.ai_service import generate_summary
 

@@ -10,33 +10,36 @@ from fastapi import (
 
 from bson import ObjectId
 
-from database import documents_collection
+from database import (
+    documents_collection,
+    quizzes_collection
+)
+
 from services.pdf_service import extract_text_from_pdf
-from utils.dependencies import get_current_user
+
+from dependencies import get_current_user
 
 router = APIRouter()
 
 
-# ==========================
+# ==========================================
 # Upload PDF
-# ==========================
+# ==========================================
+
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
 
-    # Allow only PDFs
     if file.content_type != "application/pdf":
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are allowed."
         )
 
-    # Read uploaded file
     pdf_bytes = await file.read()
 
-    # Extract text
     try:
         extracted_text = extract_text_from_pdf(pdf_bytes)
 
@@ -46,30 +49,22 @@ async def upload_document(
             detail="Unable to read PDF."
         )
 
-    # Check if PDF contains text
     if not extracted_text.strip():
         raise HTTPException(
             status_code=400,
-            detail="No readable text found in PDF."
+            detail="No readable text found."
         )
 
-    # Save document
     document = {
-
         "user_id": current_user["user_id"],
-
         "filename": file.filename,
-
         "text": extracted_text,
-
-        # AI summary will be generated later
         "summary": "",
-
         "created_at": datetime.now(timezone.utc)
-
     }
 
-    result = documents_collection.insert_one(document)
+    # Added await here
+    result = await documents_collection.insert_one(document)
 
     return {
         "message": "PDF uploaded successfully",
@@ -78,44 +73,45 @@ async def upload_document(
     }
 
 
-# ==========================
+# ==========================================
 # Get All Documents
-# ==========================
+# ==========================================
+
 @router.get("/")
-def get_documents(
+async def get_documents( # Added async
     current_user: dict = Depends(get_current_user)
 ):
 
-    documents = documents_collection.find({
-
+    # Added await and .to_list()
+    documents = await documents_collection.find({
         "user_id": current_user["user_id"]
+    }).to_list(length=1000)
 
-    })
-
-    document_list = []
+    result = []
 
     for document in documents:
-
-        document_list.append({
-
-            "id": str(document["_id"]),
-
-            "filename": document["filename"],
-
-            "summary": document.get("summary", ""),
-
-            "created_at": document["created_at"]
-
+        # Added await here
+        quiz = await quizzes_collection.find_one({
+            "document_id": str(document["_id"])
         })
 
-    return document_list
+        result.append({
+            "id": str(document["_id"]),
+            "filename": document["filename"],
+            "summary": document.get("summary", ""),
+            "has_quiz": quiz is not None,
+            "created_at": document["created_at"]
+        })
+
+    return result
 
 
-# ==========================
-# Get Single Document
-# ==========================
+# ==========================================
+# Get One Document
+# ==========================================
+
 @router.get("/{document_id}")
-def get_document(
+async def get_document( # Added async
     document_id: str,
     current_user: dict = Depends(get_current_user)
 ):
@@ -126,15 +122,13 @@ def get_document(
     except Exception:
         raise HTTPException(
             status_code=400,
-            detail="Invalid document ID."
+            detail="Invalid document id."
         )
 
-    document = documents_collection.find_one({
-
+    # Added await here
+    document = await documents_collection.find_one({
         "_id": object_id,
-
         "user_id": current_user["user_id"]
-
     })
 
     if not document:
@@ -143,26 +137,27 @@ def get_document(
             detail="Document not found."
         )
 
+    # Added await here
+    quiz = await quizzes_collection.find_one({
+        "document_id": document_id
+    })
+
     return {
-
         "id": str(document["_id"]),
-
         "filename": document["filename"],
-
         "text": document["text"],
-
         "summary": document.get("summary", ""),
-
+        "has_quiz": quiz is not None,
         "created_at": document["created_at"]
-
     }
 
 
-# ==========================
-# Delete Document (Optional)
-# ==========================
+# ==========================================
+# Delete Document
+# ==========================================
+
 @router.delete("/{document_id}")
-def delete_document(
+async def delete_document( # Added async
     document_id: str,
     current_user: dict = Depends(get_current_user)
 ):
@@ -173,15 +168,13 @@ def delete_document(
     except Exception:
         raise HTTPException(
             status_code=400,
-            detail="Invalid document ID."
+            detail="Invalid document id."
         )
 
-    result = documents_collection.delete_one({
-
+    # Added await here
+    result = await documents_collection.delete_one({
         "_id": object_id,
-
         "user_id": current_user["user_id"]
-
     })
 
     if result.deleted_count == 0:
@@ -189,6 +182,11 @@ def delete_document(
             status_code=404,
             detail="Document not found."
         )
+
+    # Added await here
+    await quizzes_collection.delete_many({
+        "document_id": document_id
+    })
 
     return {
         "message": "Document deleted successfully"

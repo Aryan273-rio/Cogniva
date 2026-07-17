@@ -1,21 +1,16 @@
-import os
+from motor.motor_asyncio import AsyncIOMotorClient
 
-from dotenv import load_dotenv
-from pymongo import MongoClient
+from config import settings
 
-# Load environment variables
-load_dotenv()
 
-# MongoDB Connection String
-MONGO_URL = os.getenv("MONGO_URL")
+client = AsyncIOMotorClient(settings.MONGO_URL)
 
-# Connect to MongoDB Atlas
-client = MongoClient(MONGO_URL)
+database = client[settings.DATABASE_NAME]
 
-# Database
-database = client["study_workspace"]
 
-# Collections
 users_collection = database["users"]
-
 documents_collection = database["documents"]
+quizzes_collection = database["quizzes"]
+quiz_attempts_collection = database["quiz_attempts"]
+flashcards_collection = database["flashcards"]
+bookmarks_collection = database["bookmarks"]

@@ -4,9 +4,7 @@ from pydantic import BaseModel, EmailStr
 from database import users_collection
 from utils.security import hash_password, verify_password, create_access_token
 
-
 router = APIRouter()
-
 
 # Data required for registration
 class RegisterUser(BaseModel):
@@ -14,19 +12,16 @@ class RegisterUser(BaseModel):
     email: EmailStr
     password: str
 
-
 # Data required for login
 class LoginUser(BaseModel):
     email: EmailStr
     password: str
 
-
 # REGISTER ROUTE
 @router.post("/register")
-def register(user: RegisterUser):
-
+async def register(user: RegisterUser):  # Added async
     # Check if user already exists
-    existing_user = users_collection.find_one({
+    existing_user = await users_collection.find_one({  # Added await
         "email": user.email
     })
 
@@ -47,7 +42,7 @@ def register(user: RegisterUser):
     }
 
     # Save user in MongoDB
-    users_collection.insert_one(new_user)
+    await users_collection.insert_one(new_user)  # Added await
 
     return {
         "message": "User registered successfully"
@@ -56,10 +51,9 @@ def register(user: RegisterUser):
 
 # LOGIN ROUTE
 @router.post("/login")
-def login(user: LoginUser):
-
+async def login(user: LoginUser):  # Added async
     # Find user in MongoDB
-    existing_user = users_collection.find_one({
+    existing_user = await users_collection.find_one({  # Added await
         "email": user.email
     })
 

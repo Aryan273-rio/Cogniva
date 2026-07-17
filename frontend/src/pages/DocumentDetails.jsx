@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
+
 import api from "../services/api";
 
 function DocumentDetails() {
 
     const { documentId } = useParams();
 
+    const navigate = useNavigate();
+
     const [document, setDocument] = useState(null);
 
     const [loading, setLoading] = useState(true);
 
     const [summaryLoading, setSummaryLoading] = useState(false);
+
+    const [quizLoading, setQuizLoading] = useState(false);
+
+    const [flashcardLoading, setFlashcardLoading] = useState(false);
 
     const [error, setError] = useState("");
 
@@ -34,7 +41,7 @@ function DocumentDetails() {
 
         }
 
-        catch(error){
+        catch (error) {
 
             setError(
 
@@ -46,7 +53,7 @@ function DocumentDetails() {
 
         }
 
-        finally{
+        finally {
 
             setLoading(false);
 
@@ -54,9 +61,9 @@ function DocumentDetails() {
 
     }
 
-    async function generateSummary(){
+    async function generateSummary() {
 
-        try{
+        try {
 
             setSummaryLoading(true);
 
@@ -76,19 +83,19 @@ function DocumentDetails() {
 
         }
 
-        catch(error){
+        catch (error) {
 
             alert(
 
                 error.response?.data?.detail ||
 
-                "Summary generation failed."
+                "Unable to generate summary."
 
             );
 
         }
 
-        finally{
+        finally {
 
             setSummaryLoading(false);
 
@@ -96,13 +103,101 @@ function DocumentDetails() {
 
     }
 
-    if(loading){
+    async function generateQuiz() {
 
-        return(
+        try {
+
+            setQuizLoading(true);
+
+            const response = await api.post(
+
+                `/quiz/generate/${documentId}`
+
+            );
+
+            navigate(
+
+                `/quiz/${response.data.quiz_id}`
+
+            );
+
+        }
+
+        catch (error) {
+
+            alert(
+
+                error.response?.data?.detail ||
+
+                "Unable to generate quiz."
+
+            );
+
+        }
+
+        finally {
+
+            setQuizLoading(false);
+
+        }
+
+    }
+
+    async function openFlashcards() {
+
+        try {
+
+            setFlashcardLoading(true);
+
+            await api.post(
+
+                `/flashcards/generate/${documentId}`
+
+            );
+
+        }
+
+        catch {
+
+            // Ignore if already generated
+
+        }
+
+        finally {
+
+            setFlashcardLoading(false);
+
+            navigate(
+
+                `/flashcards/${documentId}`
+
+            );
+
+        }
+
+    }
+
+    function openChat() {
+
+        navigate(
+
+            `/chat/${documentId}`
+
+        );
+
+    }
+
+    if (loading) {
+
+        return (
 
             <div className="document-page">
 
-                <h2>Loading Document...</h2>
+                <h2>
+
+                    Loading Document...
+
+                </h2>
 
             </div>
 
@@ -110,13 +205,17 @@ function DocumentDetails() {
 
     }
 
-    if(error){
+    if (error) {
 
-        return(
+        return (
 
             <div className="document-page">
 
-                <h2>{error}</h2>
+                <h2>
+
+                    {error}
+
+                </h2>
 
             </div>
 
@@ -124,17 +223,23 @@ function DocumentDetails() {
 
     }
 
-    return(
+    return (
 
         <div className="document-page">
 
-            <Link to="/documents">
+            <Link
+
+                className="back-link"
+
+                to="/documents"
+
+            >
 
                 ← Back to Documents
 
             </Link>
 
-            <h1>
+            <h1 className="document-title">
 
                 {document.filename}
 
@@ -152,67 +257,157 @@ function DocumentDetails() {
 
                     {
 
-                        !document.summary &&
+                        !document.summary && (
 
-                        <button
+                            <button
 
-                            onClick={generateSummary}
+                                onClick={generateSummary}
 
-                            disabled={summaryLoading}
+                                disabled={summaryLoading}
 
-                        >
+                            >
 
-                            {
+                                {
 
-                                summaryLoading
+                                    summaryLoading
 
-                                ?
+                                    ?
 
-                                "Generating..."
+                                    "Generating..."
 
-                                :
+                                    :
 
-                                "Generate Summary"
+                                    "Generate Summary"
 
-                            }
+                                }
 
-                        </button>
+                            </button>
+
+                        )
 
                     }
 
                 </div>
 
-                {
+                <div className="summary-box">
 
-                    document.summary ?
+                    {
 
-                    (
+                        document.summary
 
-                        <div className="summary-box">
+                        ?
 
-                            <pre>
+                        <pre>
 
-                                {document.summary}
+                            {document.summary}
 
-                            </pre>
+                        </pre>
 
-                        </div>
-
-                    )
-
-                    :
-
-                    (
+                        :
 
                         <p>
 
-                            No AI Summary Generated.
+                            No summary generated.
 
                         </p>
 
-                    )
+                    }
 
-                }
+                </div>
+
+            </div>
+
+            <div className="quiz-section">
+
+                <h2>
+
+                    AI Quiz
+
+                </h2>
+
+                <button
+
+                    onClick={generateQuiz}
+
+                    disabled={quizLoading}
+
+                >
+
+                    {
+
+                        quizLoading
+
+                        ?
+
+                        "Generating Quiz..."
+
+                        :
+
+                        "Generate Quiz"
+
+                    }
+
+                </button>
+
+            </div>
+
+            <div className="quiz-section">
+
+                <h2>
+
+                    AI Tutor
+
+                </h2>
+
+                <button
+
+                    onClick={openChat}
+
+                >
+
+                    Open AI Chat
+
+                </button>
+
+            </div>
+
+            <div className="quiz-section">
+
+                <h2>
+
+                    AI Flashcards
+
+                </h2>
+
+                <p>
+
+                    Generate interactive flashcards for quick revision.
+
+                </p>
+
+                <button
+
+                    onClick={openFlashcards}
+
+                    disabled={flashcardLoading}
+
+                >
+
+                    {
+
+                        flashcardLoading
+
+                        ?
+
+                        "Generating..."
+
+                        :
+
+                        "Open Flashcards"
+
+                    }
+
+                </button>
 
             </div>
 
@@ -220,7 +415,7 @@ function DocumentDetails() {
 
                 <h2>
 
-                    Extracted PDF Text
+                    Extracted Text
 
                 </h2>
 

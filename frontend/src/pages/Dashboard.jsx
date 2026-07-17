@@ -7,15 +7,11 @@ function Dashboard() {
         <div className="container">
 
             <h1>
-
                 Welcome to Cogniva
-
             </h1>
 
             <p>
-
                 Your AI Powered Study Workspace
-
             </p>
 
             <div className="cards">
@@ -23,25 +19,17 @@ function Dashboard() {
                 <div className="card">
 
                     <h2>
-
-                        Upload Notes
-
+                        📄 Upload Notes
                     </h2>
 
                     <p>
-
-                        Upload PDF study material.
-
+                        Upload PDF study material for AI-powered learning.
                     </p>
 
                     <Link to="/upload">
-
                         <button>
-
-                            Upload
-
+                            Upload PDF
                         </button>
-
                     </Link>
 
                 </div>
@@ -49,25 +37,17 @@ function Dashboard() {
                 <div className="card">
 
                     <h2>
-
-                        Documents
-
+                        📚 Documents
                     </h2>
 
                     <p>
-
-                        View uploaded documents.
-
+                        View, summarize and manage all your uploaded documents.
                     </p>
 
                     <Link to="/documents">
-
                         <button>
-
-                            View
-
+                            View Documents
                         </button>
-
                     </Link>
 
                 </div>
@@ -75,16 +55,36 @@ function Dashboard() {
                 <div className="card">
 
                     <h2>
-
-                        AI Summary
-
+                        🤖 AI Summary
                     </h2>
 
                     <p>
-
-                        Generate AI powered summaries.
-
+                        Generate concise AI summaries from your study material.
                     </p>
+
+                    <Link to="/documents">
+                        <button>
+                            Generate Summary
+                        </button>
+                    </Link>
+
+                </div>
+
+                <div className="card">
+
+                    <h2>
+                        📊 Analytics
+                    </h2>
+
+                    <p>
+                        Track quiz scores, study progress and overall performance.
+                    </p>
+
+                    <Link to="/analytics">
+                        <button>
+                            View Analytics
+                        </button>
+                    </Link>
 
                 </div>
 
