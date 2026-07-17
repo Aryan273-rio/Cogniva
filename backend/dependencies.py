@@ -1,53 +1,47 @@
-import os
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from bson import ObjectId
 
-from jose import jwt
-from jose import JWTError
+from config import settings
+from database import users_collection
 
-from dotenv import load_dotenv
-
-from fastapi import Depends
-from fastapi import HTTPException
-
-from fastapi.security import HTTPBearer
-from fastapi.security import HTTPAuthorizationCredentials
-
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-ALGORITHM = os.getenv("ALGORITHM")
-
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-def get_current_user(
-
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-
+async def get_current_user(
+    token: str = Depends(oauth2_scheme)
 ):
 
-    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
     try:
 
         payload = jwt.decode(
-
             token,
-
-            SECRET_KEY,
-
-            algorithms=[ALGORITHM]
-
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
         )
 
-        return payload
+        user_id = payload.get("user_id")
+
+        if user_id is None:
+            raise credentials_exception
 
     except JWTError:
+        raise credentials_exception
 
-        raise HTTPException(
+    user = await users_collection.find_one(
+        {
+            "_id": ObjectId(user_id)
+        }
+    )
 
-            status_code=401,
+    if user is None:
+        raise credentials_exception
 
-            detail="Invalid Token"
-
-        )
+    return user

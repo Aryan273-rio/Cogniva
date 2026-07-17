@@ -10,7 +10,6 @@ from database import (
 from dependencies import get_current_user
 from services.flashcard_service import generate_flashcards
 
-
 router = APIRouter()
 
 
@@ -41,7 +40,7 @@ async def generate_document_flashcards(
     existing = await flashcards_collection.find_one(
         {
             "document_id": document_id,
-            "user_id": current_user["user_id"]  # Fixed here
+            "user_id": str(current_user["_id"])
         }
     )
 
@@ -62,7 +61,7 @@ async def generate_document_flashcards(
         )
 
     flashcard_document = {
-        "user_id": current_user["user_id"],  # Fixed here
+        "user_id": str(current_user["_id"]),
         "document_id": document_id,
         "flashcards": flashcards,
         "created_at": datetime.utcnow()
@@ -87,7 +86,7 @@ async def get_flashcards(
     flashcards = await flashcards_collection.find_one(
         {
             "document_id": document_id,
-            "user_id": current_user["user_id"]  # Fixed here
+            "user_id": str(current_user["_id"])
         }
     )
 
@@ -112,7 +111,7 @@ async def delete_flashcards(
     result = await flashcards_collection.delete_one(
         {
             "document_id": document_id,
-            "user_id": current_user["user_id"]  # Fixed here
+            "user_id": str(current_user["_id"])
         }
     )
 

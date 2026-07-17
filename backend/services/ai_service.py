@@ -1,7 +1,6 @@
 import os
 
 import google.generativeai as genai
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,6 +32,9 @@ Text:
 {text}
 """
 
-    response = model.generate_content(prompt)
+    try:
+        response = model.generate_content(prompt)
+        return response.text
 
-    return response.text
+    except Exception as e:
+        raise Exception(f"Gemini Error: {str(e)}")

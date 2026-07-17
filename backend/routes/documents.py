@@ -56,14 +56,13 @@ async def upload_document(
         )
 
     document = {
-        "user_id": current_user["user_id"],
+        "user_id": str(current_user["_id"]),
         "filename": file.filename,
         "text": extracted_text,
         "summary": "",
         "created_at": datetime.now(timezone.utc)
     }
 
-    # Added await here
     result = await documents_collection.insert_one(document)
 
     return {
@@ -78,19 +77,18 @@ async def upload_document(
 # ==========================================
 
 @router.get("/")
-async def get_documents( # Added async
+async def get_documents(
     current_user: dict = Depends(get_current_user)
 ):
 
-    # Added await and .to_list()
     documents = await documents_collection.find({
-        "user_id": current_user["user_id"]
+        "user_id": str(current_user["_id"])
     }).to_list(length=1000)
 
     result = []
 
     for document in documents:
-        # Added await here
+
         quiz = await quizzes_collection.find_one({
             "document_id": str(document["_id"])
         })
@@ -111,7 +109,7 @@ async def get_documents( # Added async
 # ==========================================
 
 @router.get("/{document_id}")
-async def get_document( # Added async
+async def get_document(
     document_id: str,
     current_user: dict = Depends(get_current_user)
 ):
@@ -125,10 +123,9 @@ async def get_document( # Added async
             detail="Invalid document id."
         )
 
-    # Added await here
     document = await documents_collection.find_one({
         "_id": object_id,
-        "user_id": current_user["user_id"]
+        "user_id": str(current_user["_id"])
     })
 
     if not document:
@@ -137,7 +134,6 @@ async def get_document( # Added async
             detail="Document not found."
         )
 
-    # Added await here
     quiz = await quizzes_collection.find_one({
         "document_id": document_id
     })
@@ -157,7 +153,7 @@ async def get_document( # Added async
 # ==========================================
 
 @router.delete("/{document_id}")
-async def delete_document( # Added async
+async def delete_document(
     document_id: str,
     current_user: dict = Depends(get_current_user)
 ):
@@ -171,10 +167,9 @@ async def delete_document( # Added async
             detail="Invalid document id."
         )
 
-    # Added await here
     result = await documents_collection.delete_one({
         "_id": object_id,
-        "user_id": current_user["user_id"]
+        "user_id": str(current_user["_id"])
     })
 
     if result.deleted_count == 0:
@@ -183,7 +178,6 @@ async def delete_document( # Added async
             detail="Document not found."
         )
 
-    # Added await here
     await quizzes_collection.delete_many({
         "document_id": document_id
     })
